@@ -14,17 +14,88 @@ void listByCity(String city)
 каде $n$ е бројот на кандидати во дадениот град).
 * */
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
+
+class Person {
+    private String name;
+    private int age;
+    private String code;
+
+    public Person() {
+    }
+
+    public Person(String name, int age, String code) {
+        this.name = name;
+        this.age = age;
+        this.code = code;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+}
 
 class Audition {
+
+
+    private HashMap<String, HashMap<String, Person>> hash_map;
+
+
+    public Audition() {
+        this.hash_map = new HashMap<>();
+    }
+
     void addParticpant(String city, String code, String name, int age) {
+
+        if (hash_map.get(city) == null) {
+            hash_map.put(city, new HashMap<String, Person>());
+        }
+
+        if (!hash_map.get(city).containsKey(code)) {
+            hash_map.get(city).put(code, new Person(name, age, code));
+        }
+
 
     }
 
     void listByCity(String city) {
+        HashMap<String, Person> kandidati = new HashMap<>();
+
+        kandidati = this.hash_map.get(city);
+
+
+        List<Person> sortedCandidates = kandidati.values()
+                .stream()
+                .sorted(
+                        Comparator.comparing(Person::getName)
+                                .thenComparing(Person::getAge)
+                ).collect(Collectors.toList());
+
+        for (Person sortedCandidate : sortedCandidates) {
+            System.out.println(sortedCandidate.getCode() + " " + sortedCandidate.getName() + " " + sortedCandidate.getAge());
+        }
 
     }
 
