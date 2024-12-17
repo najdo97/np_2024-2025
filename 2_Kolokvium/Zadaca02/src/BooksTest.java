@@ -18,7 +18,7 @@ class Book {
 
     @Override
     public String toString() {
-        return  this.title + " (" + this.category + ") " + this.price;
+        return  this.title + " (" + this.category + ") " + String.format("%.2f", this.price);
     }
 
     public String getTitle() {
