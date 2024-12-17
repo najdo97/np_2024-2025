@@ -16,6 +16,11 @@ class Book {
         this.price = price;
     }
 
+    @Override
+    public String toString() {
+        return  this.title + " (" + this.category + ") " + this.price;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -67,6 +72,7 @@ class BookCollection {
                 .collect(Collectors.toCollection(ArrayList::new));
 
         pom.forEach(System.out::println);
+
     }
 
     public List<Book> getCheapestN(int n) {

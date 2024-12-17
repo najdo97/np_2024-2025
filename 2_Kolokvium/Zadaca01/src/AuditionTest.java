@@ -85,7 +85,6 @@ class Audition {
 
         kandidati = this.hash_map.get(city);
 
-
         List<Person> sortedCandidates = kandidati.values()
                 .stream()
                 .sorted(
