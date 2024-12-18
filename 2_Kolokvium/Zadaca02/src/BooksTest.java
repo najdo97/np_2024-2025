@@ -77,7 +77,11 @@ class BookCollection {
 
     public List<Book> getCheapestN(int n) {
         return books.stream()
-                .sorted(Comparator.comparing(Book::getPrice))
+                .sorted(
+                        Comparator
+                                .comparing(Book::getPrice)
+                                .thenComparing(Book::getTitle)
+                )
                 .limit(n)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
