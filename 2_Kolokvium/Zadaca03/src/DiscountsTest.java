@@ -39,7 +39,7 @@ class Store {
             int discounted = Integer.parseInt(prices[0]);
             int regular = Integer.parseInt(prices[1]);
 
-            answer += 100 - ((float) (discounted / regular) * 100);
+            answer += 100 - (((float) discounted / regular) * 100);
 
         }
 
@@ -63,21 +63,27 @@ class Store {
     }
 
     public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < this.prices.size(); i++) {
+
+            String[] prices = this.prices.get(i).split(":");
+            int discounted = Integer.parseInt(prices[0]);
+            int regular = Integer.parseInt(prices[1]);
+            sb.append(100 - (((float) discounted / regular) * 100) + " " + discounted + "/" + regular);
+            if (i < this.prices.size()-1) {
+                sb.append("\n");
+            }
+
+        }
+
         return this.name
                 + '\n' +
-                "Average discount: " + this.calculateAverageDiscount()
-                + '\n' +
-                "Total discount: " + this.calculateTotalDiscount()
-                ;
+                "Average discount: " + this.calculateAverageDiscount() + "%\n" +
+                "Total discount: " + (int) this.calculateTotalDiscount() + "\n"
+                + sb.toString();
 
-        /*
-            [Store_name]
-            Average discount: [заокружена вредност со едно децимално место]%
-            Total discount: [вкупен апсолутен попуст]
-            [процент во две места]% [цена на попуст]/[цена]
-         */
     }
-
 }
 
 class Discounts {
@@ -102,6 +108,8 @@ class Discounts {
     public int readStores(Scanner in) {
 
         while (in.hasNext()) {
+
+
             String line = in.nextLine().trim();
 
             String[] storeInput = line.split(" ");
@@ -110,7 +118,9 @@ class Discounts {
 
             ArrayList<String> store_prices = new ArrayList<>();
             for (int i = 1; i < storeInput.length; i++) {
-                store_prices.add(storeInput[i]);
+                if (!storeInput[i].equals("")) {
+                    store_prices.add(storeInput[i]);
+                }
             }
 
             this.stores.add(new Store(store_name, store_prices));
@@ -123,7 +133,7 @@ class Discounts {
                 .stream()
                 .sorted(
                         Comparator
-                                .comparing(Store::calculateAverageDiscount)
+                                .comparing(Store::calculateAverageDiscount).reversed()
                                 .thenComparing(Store::getName)
                 )
                 .limit(3)
@@ -137,7 +147,7 @@ class Discounts {
         return this.stores
                 .stream()
                 .sorted(Comparator
-                        .comparing(Store::calculateTotalDiscount).reversed()
+                        .comparing(Store::calculateTotalDiscount)
                         .thenComparing(Store::getName)
                 )
                 .limit(3)
