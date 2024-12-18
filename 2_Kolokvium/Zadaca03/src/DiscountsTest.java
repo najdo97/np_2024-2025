@@ -1,4 +1,3 @@
-import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,7 +31,7 @@ class Store {
         this.prices = prices;
     }
 
-    public float calcualteAverageDiscount() {
+    public float calculateAverageDiscount() {
         float answer = 0;
 
         for (String price : this.prices) {
@@ -47,7 +46,30 @@ class Store {
         return answer / this.prices.size();
     }
 
+
+    public float calculateTotalDiscount() {
+        float answer = 0;
+
+        for (String price : this.prices) {
+            String[] prices = price.split(":");
+            int discounted = Integer.parseInt(prices[0]);
+            int regular = Integer.parseInt(prices[1]);
+
+            answer += (regular - discounted);
+
+        }
+
+        return answer;
+    }
+
     public String toString() {
+        return this.name
+                + '\n' +
+                "Average discount: " + this.calculateAverageDiscount()
+                + '\n' +
+                "Total discount: " + this.calculateTotalDiscount()
+                ;
+
         /*
             [Store_name]
             Average discount: [заокружена вредност со едно децимално место]%
@@ -101,15 +123,25 @@ class Discounts {
                 .stream()
                 .sorted(
                         Comparator
-                                .comparing(Store::calcualteAverageDiscount)
+                                .comparing(Store::calculateAverageDiscount)
                                 .thenComparing(Store::getName)
                 )
                 .limit(3)
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
+
         return topDiscountStores;
     }
 
     public List<Store> byTotalDiscount() {
+
+        return this.stores
+                .stream()
+                .sorted(Comparator
+                        .comparing(Store::calculateTotalDiscount).reversed()
+                        .thenComparing(Store::getName)
+                )
+                .limit(3)
+                .collect(Collectors.toCollection(ArrayList::new));
 
     }
 
@@ -119,7 +151,7 @@ class Discounts {
 public class DiscountsTest {
     public static void main(String[] args) {
         Discounts discounts = new Discounts();
-        int stores = discounts.readStores(System.in);
+        int stores = discounts.readStores(new Scanner(System.in));
         System.out.println("Stores read: " + stores);
         System.out.println("=== By average discount ===");
         discounts.byAverageDiscount().forEach(System.out::println);
