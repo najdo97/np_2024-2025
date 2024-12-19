@@ -4,13 +4,10 @@ import java.util.stream.Collectors;
 class Store {
 
     private String name;
-    private List<String> prices;
+    private List<ArrayList<Integer>> prices;
 
-    public Store() {
-        this.prices = new ArrayList<>();
-    }
 
-    public Store(String name, List<String> prices) {
+    public Store(String name, List<ArrayList<Integer>> prices) {
         this.name = name;
         this.prices = prices;
     }
@@ -23,26 +20,20 @@ class Store {
         this.name = name;
     }
 
-    public List<String> getPrices() {
+    public List<ArrayList<Integer>> getPrices() {
         return prices;
     }
 
-    public void setPrices(List<String> prices) {
+    public void setPrices(List<ArrayList<Integer>> prices) {
         this.prices = prices;
     }
 
     public float calculateAverageDiscount() {
         float answer = 0;
 
-        for (String price : this.prices) {
-            String[] prices = price.split(":");
-            int discounted = Integer.parseInt(prices[0]);
-            int regular = Integer.parseInt(prices[1]);
-
-            answer += 100 - (((float) discounted / regular) * 100);
-
+        for (ArrayList<Integer> price : this.prices) {
+            answer += price.get(0);
         }
-
         return answer / this.prices.size();
     }
 
@@ -50,36 +41,43 @@ class Store {
     public float calculateTotalDiscount() {
         float answer = 0;
 
-        for (String price : this.prices) {
-            String[] prices = price.split(":");
-            int discounted = Integer.parseInt(prices[0]);
-            int regular = Integer.parseInt(prices[1]);
-
-            answer += (regular - discounted);
-
+        for (ArrayList<Integer> price : this.prices) {
+            answer += (price.get(2) - price.get(1));
         }
-
         return answer;
     }
 
+
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        List<ArrayList<Integer>> sortedList = new ArrayList<>();
 
-        for (int i = 0; i < this.prices.size(); i++) {
 
-            String[] prices = this.prices.get(i).split(":");
-            int discounted = Integer.parseInt(prices[0]);
-            int regular = Integer.parseInt(prices[1]);
-            sb.append(100 - (((float) discounted / regular) * 100) + " " + discounted + "/" + regular);
-            if (i < this.prices.size()-1) {
+        sortedList = this.prices
+                .stream()
+                .sorted(
+                        Comparator
+                                .<List<Integer>, Integer>comparing(subList -> subList.get(0))
+                                .thenComparing(subList -> (subList.get(2) - subList.get(1))).reversed()
+                )
+
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < sortedList.size(); i++) {
+            if (sortedList.get(i).get(0) < 10) {
+                sb.append(" "+sortedList.get(i).get(0) + "% " + sortedList.get(i).get(1) + "/" + sortedList.get(i).get(2));
+
+            } else {
+                sb.append(sortedList.get(i).get(0) + "% " + sortedList.get(i).get(1) + "/" + sortedList.get(i).get(2));
+            }
+            if (i < this.prices.size() - 1) {
                 sb.append("\n");
             }
-
         }
 
         return this.name
                 + '\n' +
-                "Average discount: " + this.calculateAverageDiscount() + "%\n" +
+                "Average discount: " + String.format("%.1f", this.calculateAverageDiscount()) + "%\n" +
                 "Total discount: " + (int) this.calculateTotalDiscount() + "\n"
                 + sb.toString();
 
@@ -109,19 +107,27 @@ class Discounts {
 
         while (in.hasNext()) {
 
-
             String line = in.nextLine().trim();
-
             String[] storeInput = line.split(" ");
-
             String store_name = storeInput[0];
 
-            ArrayList<String> store_prices = new ArrayList<>();
+            ArrayList<ArrayList<Integer>> store_prices = new ArrayList<>();
             for (int i = 1; i < storeInput.length; i++) {
                 if (!storeInput[i].equals("")) {
-                    store_prices.add(storeInput[i]);
+
+                    String[] price = storeInput[i].split(":");
+                    int discounted_price = Integer.parseInt(price[0]);
+                    int regular_price = Integer.parseInt(price[1]);
+
+                    ArrayList<Integer> pom = new ArrayList<>();
+                    pom.add((int) (100 - (((float) discounted_price / regular_price) * 100)));
+                    pom.add(discounted_price);
+                    pom.add(regular_price);
+
+                    store_prices.add(pom);
                 }
             }
+
 
             this.stores.add(new Store(store_name, store_prices));
         }
