@@ -70,26 +70,34 @@ class FileSystem {
 
     public void addFile(char folder, String name, int size, LocalDateTime createdAt) {
 
-            if (folders.get(folder) != null) {
-                List<File> listOfFiles = folders.get(folder);
-                listOfFiles.add(new File(name, size, createdAt));
+        if (folders.get(folder) != null) {
+            List<File> listOfFiles = folders.get(folder);
+            listOfFiles.add(new File(name, size, createdAt));
 
-                //    folders.put(folder, listOfFiles); --> no need for this, the list is passed on by reference so in the line above it updates the lsit and therfore the hashmap
+            //    folders.put(folder, listOfFiles); --> no need for this, the list is passed on by reference so in the line above it updates the lsit and therfore the hashmap
 
-            } else {
-                List<File> listOfFiles = new ArrayList<>();
-                listOfFiles.add(new File(name, size, createdAt));
-                folders.put(folder, listOfFiles);
-            }
+        } else {
+            List<File> listOfFiles = new ArrayList<>();
+            listOfFiles.add(new File(name, size, createdAt));
+            folders.put(folder, listOfFiles);
         }
     }
 
-    public List<File> findAllHiddenFilesWithSizeLessThen(int size) {
 
+    public List<File> findAllHiddenFilesWithSizeLessThen(int size) {
+        return this.folders.values()
+                .stream()
+                .flatMap(List::stream)
+                .filter(file -> file.getName().startsWith("."))
+                .filter(file -> file.getSize() < size)
+                .collect(Collectors.toList());
     }
 
-    public int totalSizeOfFilesFromFolders(List<Character> folders) {
-
+    public int totalSizeOfFilesFromFolders(List<Character> folder_names) {
+        return this.folders.keySet()
+                .stream()
+                .forEach(f->this.folders.get(folder_names))
+                .;
     }
 
     public Map<Integer, Set<File>> byYear() {
