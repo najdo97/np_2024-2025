@@ -77,9 +77,9 @@ class Faculty {
                                 Record::getStudentId,
                                 TreeMap::new,
                                 Collectors.mapping(Record::getCourseName, Collectors.toList())
-                                            //ja pretvara lsitata od Records vo lista od Strings kade shto
-                                            // mapiranjeto se vrshi taka shto zima funkcija kako argument Record::getCourseName,
-                                            // i posle toa kazuvassh vo sho sakash da se pretvori strimot
+                                //ja pretvara lsitata od Records vo lista od Strings kade shto
+                                // mapiranjeto se vrshi taka shto zima funkcija kako argument Record::getCourseName,
+                                // i posle toa kazuvassh vo sho sakash da se pretvori strimot
                         )
                 );
     }
@@ -88,6 +88,19 @@ class Faculty {
     // во која клуч е предметот, а вредност е просечната оценка по тој предмет во соодветната испитна сесија.
     // Во предвид се земаат само оценките поголеми од 5.
     Map<String, Map<String, Double>> averageGradePerExamSession() {
+
+        return this.records.stream()
+                .filter(r -> r.getGrade() > 5)
+                .collect(Collectors.groupingBy(
+                                Record::yearAndMonth,
+                                TreeMap::new,
+                                Collectors.groupingBy(
+                                        Record::getCourseName,
+                                        TreeMap::new,
+                                        Collectors.averagingInt(Record::getGrade)
+                                )
+                        )
+                );
     }
 
 }
