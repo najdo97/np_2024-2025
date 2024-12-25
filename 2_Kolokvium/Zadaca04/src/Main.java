@@ -40,11 +40,11 @@ class File {
         this.creationDate = creationDate;
     }
 
-
-    @Override
-    public String toString() {
-
-    }
+//
+//    @Override
+//    public String toString() {
+//
+//    }
 }
 
 class FileSystem {
@@ -94,17 +94,36 @@ class FileSystem {
     }
 
     public int totalSizeOfFilesFromFolders(List<Character> folder_names) {
-        return this.folders.keySet()
+        return this.folders.entrySet()
                 .stream()
-                .forEach(f->this.folders.get(folder_names))
-                .;
+                .filter(entry -> folder_names.contains(entry.getKey()))
+                .flatMap(entry -> entry.getValue().stream())
+                .mapToInt(File::getSize)
+                .sum();
     }
 
     public Map<Integer, Set<File>> byYear() {
 
+        return this.folders.values()
+                .stream()
+                .flatMap(List::stream)
+                .collect(Collectors.groupingBy(
+                                file -> file.getCreationDate().getYear(),
+                                Collectors.toSet()
+                        )
+                );
+
     }
 
     public Map<String, Long> sizeByMonthAndDay() {
+        return this.folders.values()
+                .stream()
+                .flatMap(List::stream)
+                .collect(Collectors.groupingBy(
+                                file -> file.getCreationDate().getMonth() + "-" + file.getCreationDate().getDayOfMonth(),
+                                Collectors.summingLong(File::getSize)
+                        )
+                );
 
     }
 
