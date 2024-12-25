@@ -6,25 +6,29 @@ class MP3Player {
     private List<Song> songs;
     private Song current_song;
     private boolean isPaused;
+    private boolean isStopped;
 
     public MP3Player() {
         songs = new ArrayList<>();
         current_song = null;
-        isPaused = false;
+        isPaused = true;
+        this.isStopped = false;
     }
 
     public MP3Player(List<Song> songs) {
         this.songs = songs;
-        this.current_song = songs.get(0);
-        this.isPaused = false;
+        this.current_song = this.songs.get(0);
+        this.isPaused = true;
+        this.isStopped = false;
     }
 
     public void pressPlay() {
-        if (isPaused == false) {
+        if (!isPaused) {
             System.out.println("Song is already playing");
             return;
         }
         this.isPaused = false;
+        this.isStopped=false;
         int song_number = 0;
         for (int i = 0; i < songs.size(); i++) {
             if (songs.get(i).equals(current_song)) {
@@ -36,9 +40,14 @@ class MP3Player {
 
     public void pressStop() {
 
-        if (this.isPaused) {
+        if (this.isPaused && !this.isStopped) {
             current_song = this.songs.get(0);
-            this.isPaused = false;
+            System.out.println("Songs are stopped");
+            this.isStopped=true;
+            return;
+        }else if(this.isPaused && this.isStopped){
+            current_song = this.songs.get(0);
+            System.out.println("Songs are already stopped");
             return;
         }
         this.isPaused = true;
@@ -58,22 +67,25 @@ class MP3Player {
     public void pressFWD() {
         //mozno e da treba da se pauzira tuaka pesnata
 
+        System.out.println("Forward...");
         isPaused = true; //not sure about this
 
         for (int i = 0; i < songs.size(); i++) {
             if (songs.get(i).equals(current_song)) {
-                if (i + 1 == songs.size()) {
-                    current_song = songs.get(0);
+                if (i == songs.size()-1) {
+                    this.current_song = songs.get(0);
+                    break;
                 } else {
-                    current_song = songs.get(i + 1);
+                    this.current_song = songs.get(i + 1);
+                    break;
                 }
             }
         }
-
     }
 
     public void pressREW() {
 
+        System.out.println("Reward...");
         isPaused = true; //not sure about this
         for (int i = 0; i < songs.size(); i++) {
             if (songs.get(i).equals(current_song)) {
@@ -82,15 +94,23 @@ class MP3Player {
                 } else {
                     current_song = songs.get(i - 1);
                 }
+                break;
             }
         }
     }
 
     @Override
     public String toString() {
+        int song_number = 0;
+        for (int i = 0; i < songs.size(); i++) {
+            if (songs.get(i).equals(current_song)) {
+                song_number = i;
+            }
+        }
+
         return "MP3Player{" +
-                "currentSong =" + current_song +
-                "songList =" + songs +
+                "currentSong = " + song_number +
+                ", songList = " + songs +
                 '}';
     }
 }
@@ -115,7 +135,7 @@ class Song {
 }
 
 
-public class PatternTest {
+public class Main {
     public static void main(String args[]) {
         List<Song> listSongs = new ArrayList<Song>();
         listSongs.add(new Song("first-title", "first-artist"));
