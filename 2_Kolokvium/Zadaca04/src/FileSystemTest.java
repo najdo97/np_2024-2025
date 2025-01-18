@@ -1,8 +1,9 @@
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-class File {
+class File implements Comparable<File>{
     private String name;
     private Integer size;
     private LocalDateTime creationDate;
@@ -40,11 +41,24 @@ class File {
         this.creationDate = creationDate;
     }
 
-//
-//    @Override
-//    public String toString() {
-//
-//    }
+    
+
+    @Override
+    public int compareTo(File other) {
+        return Comparator.comparing(File::getCreationDate) // Compare by creation date
+                .thenComparing(File::getName)             // Then by name lexicographically
+                .thenComparing(File::getSize)             // Then by size
+                .compare(this, other);
+    }
+
+
+
+    @Override
+    public String toString() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        return String.format("%-10s %5dB %s",name, size, creationDate.format(formatter));
+    }
+
 }
 
 class FileSystem {
@@ -90,6 +104,8 @@ class FileSystem {
                 .flatMap(List::stream)
                 .filter(file -> file.getName().startsWith("."))
                 .filter(file -> file.getSize() < size)
+//                .sorted()                                               //ova sorted e problem, defaultniot sort ne e tocen,
+//                                                                          no ne e specificirano kako treba da se overridne
                 .collect(Collectors.toList());
     }
 
