@@ -22,6 +22,8 @@ class Faculty {
 
     //: Враќа мапа која го содржи просечниот успех на секој студент, земајќи ги предвид само оценките поголеми од 5.
     Map<String, Double> studentsAverageGrade() {
+
+        records.stream().collect(Collectors.groupingBy())
         return this.records.stream()
                 .filter(r -> r.getGrade() > 5)
                 .collect(Collectors.groupingBy(
