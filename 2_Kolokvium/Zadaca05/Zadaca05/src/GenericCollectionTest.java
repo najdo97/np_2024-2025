@@ -35,9 +35,29 @@ class GenericCollection<T extends IHasTimestamp> {
 
     Collection<T> itemsFromCategories(List<String> categories) {
 
+        return categories.stream()
+                .map(category -> elements.get(category))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+
+        //kreirame stream of Stringovi, pa potoa .map() funkcijata samo vrshi operacija za sekoj clen od taa lista
+        //u pricip znae deka category e String (taka ni e pratena kako argument) i operacijata elements.get(category) ja vrshi za sekoja promenliva vo pratenata niza
+        //operacijata e : naogja kategorija vo nashata hash mapa
+
+        //Bidejki imame poishe kategorii i poise listi, istite so flatMap() se spojuvaat u edna
+
     }
 
     public Map<String, Set<Т>> byMonthAndDay() {
+        // враќа мапа во која што елементите се групирани според нивниот timestamp
+        // (поточно месецот и денот конкатенирани со - измеѓу нив пр. 12-30, без разлика на годината).
+        // Месецот се добива со повик на методот getMonth(), а денот getDayOfMonth().
+
+        //todo - treba da se koristi groupingBy
+
+        //mozebi so TreeMap kade shto klucot e mesec-denot ke gi sortira leksikonografski spored Stringovite
+        //value treba da se site T objekti sho se kreirani na  toj den, se vrakja set
+
 
     }
 
