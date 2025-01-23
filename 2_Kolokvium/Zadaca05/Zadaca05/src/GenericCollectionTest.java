@@ -3,7 +3,7 @@ import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 
-class GenericCollection<T extends IHasTimestamp> {
+class GenericCollection<T extends Comparable<T> & IHasTimestamp> {
 
     private Map<String, List<T>> elements;
 
@@ -35,10 +35,22 @@ class GenericCollection<T extends IHasTimestamp> {
 
     Collection<T> itemsFromCategories(List<String> categories) {
 
-        return categories.stream()
-                .map(category -> elements.get(category))
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        return elements.keySet()
+                .stream()
+                .filter(categories::contains)
+                .flatMap(element -> elements.get(element).stream())
+                .collect(Collectors.toCollection(() -> new TreeSet<T>(Comparator.reverseOrder())));
+
+
+//        return categories.stream()
+//                .map(category -> elements.get(category))
+//                .flatMap(Collection::stream)
+//                .collect(Collectors.groupingBy(
+//                                element -> element.get(),
+//                                TreeMap::new,
+//                                Collectors.toList()
+//                        )
+//                );
 
         //kreirame stream of Stringovi, pa potoa .map() funkcijata samo vrshi operacija za sekoj clen od taa lista
         //u pricip znae deka category e String (taka ni e pratena kako argument) i operacijata elements.get(category) ja vrshi za sekoja promenliva vo pratenata niza
@@ -48,21 +60,31 @@ class GenericCollection<T extends IHasTimestamp> {
 
     }
 
-    public Map<String, Set<Т>> byMonthAndDay() {
-        // враќа мапа во која што елементите се групирани според нивниот timestamp
-        // (поточно месецот и денот конкатенирани со - измеѓу нив пр. 12-30, без разлика на годината).
-        // Месецот се добива со повик на методот getMonth(), а денот getDayOfMonth().
+    public Map<String, Set<T>> byMonthAndDay() {
 
-        //todo - treba da se koristi groupingBy
-
-        //mozebi so TreeMap kade shto klucot e mesec-denot ke gi sortira leksikonografski spored Stringovite
-        //value treba da se site T objekti sho se kreirani na  toj den, se vrakja set
-
-
+        return this.elements.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.groupingBy(
+                        element -> {
+                            int month = element.getTimestamp().getMonthValue();
+                            int day = element.getTimestamp().getDayOfMonth();
+                            return String.format("%02d-%02d", month, day);
+                        },
+                        TreeMap::new,
+                        Collectors.toSet()
+                ));
     }
 
     public Map<Integer, Long> countByYear() {
-
+        return this.elements.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.groupingBy(
+                        element -> element.getTimestamp().getYear(),
+                        TreeMap::new,
+                        Collectors.counting()
+                ));
     }
 
 }
@@ -80,6 +102,10 @@ class IntegerElement implements Comparable<IntegerElement>, IHasTimestamp {
     public IntegerElement(int value, LocalDateTime timestamp) {
         this.value = value;
         this.timestamp = timestamp;
+    }
+
+    public int getValue() {
+        return value;
     }
 
     @Override
