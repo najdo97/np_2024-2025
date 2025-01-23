@@ -30,7 +30,9 @@ class GenericCollection<T extends Comparable<T> & IHasTimestamp> {
                             LocalDateTime timestamp = item.getTimestamp();
                             return timestamp.isAfter(from) && timestamp.isBefore(to);
                         }
-                ).collect(Collectors.toList());
+                )
+                .collect(Collectors.toCollection(() -> new TreeSet<T>(Comparator.reverseOrder())));
+
     }
 
     Collection<T> itemsFromCategories(List<String> categories) {
@@ -72,7 +74,7 @@ class GenericCollection<T extends Comparable<T> & IHasTimestamp> {
                             return String.format("%02d-%02d", month, day);
                         },
                         TreeMap::new,
-                        Collectors.toSet()
+                        Collectors.toCollection(() -> new TreeSet<T>(Comparator.reverseOrder()))
                 ));
     }
 
