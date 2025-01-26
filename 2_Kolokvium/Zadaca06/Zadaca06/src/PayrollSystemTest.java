@@ -4,23 +4,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 abstract class Employee {
-    @Override
-    public String toString() {
-        return "Employee{" +
-                "employeeId='" + employeeId + '\'' +
-                ", level='" + level + '\'' +
-                '}';
-    }
+
 
     private String employeeId;
     private String level;
+    private double pay;
 
     public Employee() {
+        this.pay = 0;
     }
 
     public Employee(String employeeId, String level) {
         this.employeeId = employeeId;
         this.level = level;
+        this.pay = 0;
     }
 
     public String getEmployeeId() {
@@ -38,15 +35,29 @@ abstract class Employee {
     public void setLevel(String level) {
         this.level = level;
     }
+
+    public double getPay() {
+        return pay;
+    }
+
+    public void setPay(double pay) {
+        this.pay = pay;
+    }
 }
 
 class HourlyEmployee extends Employee {
 
     @Override
     public String toString() {
-        return "HourlyEmployee{" +
-                "hoursWorked=" + hoursWorked +
-                '}';
+        double regularHours = this.getHoursWorked();
+        double overtime = 0;
+
+        if (regularHours > 40) {
+            overtime = regularHours - 40;
+            regularHours = 40;
+        }
+        return "Employee ID: " + this.getEmployeeId() + " Level: " + this.getLevel() + " Salary: " + String.format("%.2f", this.getPay()) + " Regular hours: " + String.format("%.2f", regularHours) + " Overtime hours: " + String.format("%.2f", overtime);
+
     }
 
     private double hoursWorked;
@@ -68,9 +79,11 @@ class HourlyEmployee extends Employee {
 class FreelanceEmployee extends Employee {
     @Override
     public String toString() {
-        return "FreelanceEmployee{" +
-                "ticketsSolved=" + ticketsSolved +
-                '}';
+        int ticketPoints = 0;
+        for (Integer ticket : this.ticketsSolved) {
+            ticketPoints += ticket;
+        }
+        return "Employee ID: " + this.getEmployeeId() + " Level: " + this.getLevel() + " Salary: " + String.format("%.2f", this.getPay()) + " Tickets count: " + this.ticketsSolved.size() + " Tickets points: " + ticketPoints ;
     }
 
     private List<Integer> ticketsSolved;
@@ -144,11 +157,6 @@ class PayrollSystem {
     public Double calculatePay(Employee e) {
         double totalPay = 0.0;
 
-        // HourlyEmployee добиваат плата базирана на вкупниот број на изработени часови
-        // Платата на HourlyEmployee се пресметува така што сите часови работа до 40 часа се множат со саатницата определена за нивото,
-        // а сите часови работа над 40 часа, се множат со саатницата на нивото зголемена за коефициент 1.5.
-
-
         if (e instanceof HourlyEmployee) {
 
             HourlyEmployee he = (HourlyEmployee) e;
@@ -157,15 +165,13 @@ class PayrollSystem {
 
             if (hoursWorked <= 40) {
                 totalPay = rate * hoursWorked;
+
             } else {
                 totalPay = rate * 40;
                 totalPay += (hoursWorked - 40) * rate * 1.5;
             }
-
+            e.setPay(totalPay);
         } else if (e instanceof FreelanceEmployee) {
-            // FreelanceEmployee добиваат плата базирана на поените на тикетите што ги решиле
-            // Платата на FreelanceEmployee се пресметува така што сумата на поените на тикетите коишто програмерот ги
-            // решил се множат со плата по тикет (ticket rate) за нивото.
 
             FreelanceEmployee fe = (FreelanceEmployee) e;
             Integer ticket_points = 0;
@@ -173,7 +179,9 @@ class PayrollSystem {
                 ticket_points += ticket;
             }
             totalPay = ticket_points * this.ticketRateByLevel.get(fe.getLevel());
+            e.setPay(totalPay);
         }
+
 
         return totalPay;
     }
@@ -234,6 +242,7 @@ public class PayrollSystemTest {
             System.out.println("LEVEL: " + level);
             System.out.println("Employees: ");
             employees.forEach(System.out::println);
+            System.out.println("------------");
         });
 
 
