@@ -41,7 +41,7 @@ class File implements Comparable<File>{
         this.creationDate = creationDate;
     }
 
-    
+
 
     @Override
     public int compareTo(File other) {

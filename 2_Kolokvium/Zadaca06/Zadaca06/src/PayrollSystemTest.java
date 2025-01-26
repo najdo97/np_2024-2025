@@ -1,8 +1,17 @@
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 abstract class Employee {
+    @Override
+    public String toString() {
+        return "Employee{" +
+                "employeeId='" + employeeId + '\'' +
+                ", level='" + level + '\'' +
+                '}';
+    }
+
     private String employeeId;
     private String level;
 
@@ -14,31 +23,75 @@ abstract class Employee {
         this.level = level;
     }
 
+    public String getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
+    }
 }
 
 class HourlyEmployee extends Employee {
-    // HourlyEmployee добиваат плата базирана на вкупниот број на изработени часови
 
-    //Платата на HourlyEmployee се пресметува така што сите часови работа до 40 часа се множат со саатницата определена за нивото,
-    // а сите часови работа над 40 часа, се множат со саатницата на нивото зголемена за коефициент 1.5.
+    @Override
+    public String toString() {
+        return "HourlyEmployee{" +
+                "hoursWorked=" + hoursWorked +
+                '}';
+    }
 
-    private int hoursWorked;
+    private double hoursWorked;
 
-    public HourlyEmployee(String employeeId, String level, int hoursWorked) {
+    public HourlyEmployee(String employeeId, String level, double hoursWorked) {
         super(employeeId, level);
         this.hoursWorked = hoursWorked;
     }
 
+    public double getHoursWorked() {
+        return hoursWorked;
+    }
 
+    public void setHoursWorked(double hoursWorked) {
+        this.hoursWorked = hoursWorked;
+    }
 }
 
 class FreelanceEmployee extends Employee {
-    // FreelanceEmployee добиваат плата базирана на поените на тикетите што ги решиле
+    @Override
+    public String toString() {
+        return "FreelanceEmployee{" +
+                "ticketsSolved=" + ticketsSolved +
+                '}';
+    }
 
-    // Платата на FreelanceEmployee се пресметува така што сумата на поените на тикетите коишто програмерот ги
-    // решил се множат со плата по тикет (ticket rate) за нивото.
+    private List<Integer> ticketsSolved;
 
 
+    public FreelanceEmployee(List<Integer> ticketsSolved) {
+        this.ticketsSolved = ticketsSolved;
+    }
+
+    public FreelanceEmployee(String employeeId, String level, List<Integer> ticketsSolved) {
+        super(employeeId, level);
+        this.ticketsSolved = ticketsSolved;
+    }
+
+    public List<Integer> getTicketsSolved() {
+        return ticketsSolved;
+    }
+
+    public void setTicketsSolved(List<Integer> ticketsSolved) {
+        this.ticketsSolved = ticketsSolved;
+    }
 }
 
 class PayrollSystem {
@@ -48,7 +101,6 @@ class PayrollSystem {
 
     private Map<String, Double> hourlyRateByLevel;
     private Map<String, Double> ticketRateByLevel;
-
 
     public PayrollSystem() {
         this.hourlyEmployees = new ArrayList<>();
@@ -63,28 +115,97 @@ class PayrollSystem {
         //  а втората мапа означува колку е платата по поен од тикет за соодветното ниво за фриленсерите.
         this.hourlyEmployees = new ArrayList<>();
         this.freelanceEmployees = new ArrayList<>();
-
-        
-
+        this.hourlyRateByLevel = hourlyRateByLevel;
+        this.ticketRateByLevel = ticketRateByLevel;
     }
 
     void readEmployeesData(InputStream is) {
-        //метод за вчитување на податоците за вработените во компанијата,
-        // при што за секој вработен податоците се дадени во нов ред.
-        // Податоците за вработените се во следниот формат:
+        Scanner input = new Scanner(is);
 
-        // Доколку вработениот е HourlyEmployee: H;ID;level;hours;
-        // Доколку вработениот е FreelanceEmployee: F;ID;level;ticketPoints1;ticketPoints2;...;ticketPointsN;
-
+        while (input.hasNext()) {
+            String employee = input.next();
+            // Доколку вработениот е HourlyEmployee: H;ID;level;hours;
+            if (employee.startsWith("H")) {
+                String[] data = employee.split(";");
+                this.hourlyEmployees.add(new HourlyEmployee(data[1], data[2], Double.parseDouble(data[3])));
+            }
+            // Доколку вработениот е FreelanceEmployee: F;ID;level;ticketPoints1;ticketPoints2;...;ticketPointsN;
+            if (employee.startsWith("F")) {
+                String[] data = employee.split(";");
+                ArrayList<Integer> poeni = new ArrayList<>();
+                for (int i = 3; i < data.length; i++) {
+                    poeni.add(Integer.parseInt(data[i]));
+                }
+                this.freelanceEmployees.add(new FreelanceEmployee(data[1], data[2], poeni));
+            }
+        }
     }
 
-    Map<String, Collection<Employee>> printEmployeesByLevels(OutputStream os, Set<String> levels) {
-        //- метод којшто нa излезен поток ќе врати мапа од вработeните во нивоата levels групирани по нивоа.
-        // Вработените да бидат сортирани според плата во опаѓачки редослед во рамките на нивото.
-        // Доколку платата е иста, да се споредуваат според нивото.
+    public Double calculatePay(Employee e) {
+        double totalPay = 0.0;
+
+        // HourlyEmployee добиваат плата базирана на вкупниот број на изработени часови
+        // Платата на HourlyEmployee се пресметува така што сите часови работа до 40 часа се множат со саатницата определена за нивото,
+        // а сите часови работа над 40 часа, се множат со саатницата на нивото зголемена за коефициент 1.5.
+
+
+        if (e instanceof HourlyEmployee) {
+
+            HourlyEmployee he = (HourlyEmployee) e;
+            Double hoursWorked = he.getHoursWorked();
+            Double rate = this.hourlyRateByLevel.get(he.getLevel());
+
+            if (hoursWorked <= 40) {
+                totalPay = rate * hoursWorked;
+            } else {
+                totalPay = rate * 40;
+                totalPay += (hoursWorked - 40) * rate * 1.5;
+            }
+
+        } else if (e instanceof FreelanceEmployee) {
+            // FreelanceEmployee добиваат плата базирана на поените на тикетите што ги решиле
+            // Платата на FreelanceEmployee се пресметува така што сумата на поените на тикетите коишто програмерот ги
+            // решил се множат со плата по тикет (ticket rate) за нивото.
+
+            FreelanceEmployee fe = (FreelanceEmployee) e;
+            Integer ticket_points = 0;
+            for (Integer ticket : fe.getTicketsSolved()) {
+                ticket_points += ticket;
+            }
+            totalPay = ticket_points * this.ticketRateByLevel.get(fe.getLevel());
+        }
+
+        return totalPay;
     }
 
+    Map<String, Set<Employee>> printEmployeesByLevels(OutputStream os, Set<String> levels) {
+        List<Employee> allEmployees = new ArrayList<>();
 
+        allEmployees.addAll(this.freelanceEmployees);
+        allEmployees.addAll(this.hourlyEmployees);
+
+        Comparator<Employee> employeeComparator = (e1, e2) -> {
+            int payComparison = calculatePay(e2).compareTo(calculatePay(e1)); // Descending pay
+            if (payComparison != 0) return payComparison;
+
+            return e1.getLevel().compareTo(e2.getLevel()); // Ascending level if pay is equal
+        };
+
+        return allEmployees.stream()
+                .filter(e -> {
+                    String level = e.getLevel();
+                    return levels.contains(level);
+                })
+                .collect(Collectors.groupingBy(
+                        Employee::getLevel,
+                        TreeMap::new,
+                        Collectors.toCollection(() -> new TreeSet<Employee>(employeeComparator)))
+                );
+    }
+
+    //- метод којшто нa излезен поток ќе врати мапа од вработeните во нивоата levels групирани по нивоа.
+    // Вработените да бидат сортирани според плата во опаѓачки редослед во рамките на нивото.
+    // Доколку платата е иста, да се споредуваат според нивото.
 }
 
 public class PayrollSystemTest {
@@ -101,7 +222,7 @@ public class PayrollSystemTest {
         PayrollSystem payrollSystem = new PayrollSystem(hourlyRateByLevel, ticketRateByLevel);
 
         System.out.println("READING OF THE EMPLOYEES DATA");
-        payrollSystem.readEmployees(System.in);
+        payrollSystem.readEmployeesData(System.in);
 
         System.out.println("PRINTING EMPLOYEES BY LEVEL");
         Set<String> levels = new LinkedHashSet<>();
