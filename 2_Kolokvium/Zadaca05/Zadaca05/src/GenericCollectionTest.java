@@ -1,12 +1,12 @@
-//.collect(Collectors.toCollection(() -> new TreeSet<T>(Comparator.reverseOrder())));
 
+import com.sun.source.tree.Tree;
 
 import java.util.*;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 
-class GenericCollection<T extends Comparable & IHasTimestamp> {
+class GenericCollection<T extends Comparable<T> & IHasTimestamp> {
 
     Map<String, List<T>> elements;
 
@@ -55,14 +55,39 @@ class GenericCollection<T extends Comparable & IHasTimestamp> {
     }
 
 
-    //враќа мапа во која што елементите се групирани според нивниот timestamp (поточно месецот и денот конкатенирани со - измеѓу нив пр. 12-30, без разлика на годината).
+    //враќа мапа во која што елементите се групирани според нивниот timestamp
+    // (поточно месецот и денот конкатенирани со - измеѓу нив пр. 12-30,без разлика на годината).
     // Месецот се добива со повик на методот getMonth(), а денот getDayOfMonth().
-    public Map<String, Set<Т>> byMonthAndDay() {
+
+    public Map<String, Set<T>> byMonthAndDay() {
+
+        return this.elements.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.groupingBy(
+                        e -> {
+                            // Ovdeka se kreira klucot, ovaa funkcija za sekoj element vo strimot go izvleguva klucot, i potoa go dodava vo HashMapata
+                            int month = e.getTimestamp().getMonthValue();
+                            int day = e.getTimestamp().getDayOfMonth();
+                            return String.format("%02d-%02d", month, day);
+                        },
+                        TreeMap::new,   //2 argument e kakov tip na Map sakame da koristime
+                        Collectors.toCollection(() -> new TreeSet<T>(Comparator.reverseOrder())))   // Kolektorot ustvari gi pribira site vrednosti i gi smestuva kako values za dadeniot kluc
+                );
 
     }
 
+    //враќа мапа во која што клучеви се сите години кога има креирани некој елелемт,
+    // а соодветната вредност е бројот на елементи креирани во таа година.
     public Map<Integer, Long> countByYear() {
 
+        return this.elements.values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.groupingBy(
+                        e -> e.getTimestamp().getYear(),
+                        TreeMap::new,
+                        Collectors.counting()
+                ));
     }
 
 }
