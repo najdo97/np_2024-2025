@@ -8,7 +8,16 @@ abstract class Employee implements Comparable<Employee> {
     private String level;
     private double pay;
 
-    abstract double calculatePay();
+    abstract void calculatePay(Map<String, Double> rate);
+
+    @Override
+    public int compareTo(Employee o) {
+        if (this.getPay() < o.getPay()) {
+            return -1;
+        } else if (this.getPay() == o.getPay()) {
+            return 0;
+        } else return 1;
+    }
 
     public Employee() {
     }
@@ -72,21 +81,41 @@ class HourlyEmployee extends Employee {
     }
 
     @Override
-    double calculatePay() {
-        return 0;
+    void calculatePay(Map<String, Double> hourlyRateByLevel) {
+
+        if (this.hoursWorked <= 40) {
+            this.setPay(hoursWorked * hourlyRateByLevel.get(this.getLevel()));
+        } else {
+            this.setPay((hoursWorked - 40) * hourlyRateByLevel.get(this.getLevel()) * 1.5 + 40 * hourlyRateByLevel.get(this.getLevel()));
+        }
     }
+
 
     //    The method should return:
 //    A negative integer if this is less than o.
 //    Zero if this is equal to o.
 //    A positive integer if this is greater than o.
+
+//    @Override
+//    public int compareTo(Employee o) {
+//        if (this.getPay() < o.getPay()) {
+//            return -1;
+//        } else if (this.getPay() == o.getPay()) {
+//            return 0;
+//        } else return 1;
+//    }
+
     @Override
-    public int compareTo(Employee o) {
-        if (this.getPay() < o.getPay()) {
-            return -1;
-        } else if (this.getPay() == o.getPay()) {
-            return 0;
-        } else return 1;
+    public String toString() {
+
+        double regularHours = hoursWorked;
+        double overtime = 0;
+        if (this.hoursWorked > 40) {
+            regularHours = 40;
+            overtime = this.hoursWorked - 40;
+        }
+        return "Employee ID: " + this.getId() + " Level: " + this.getLevel() + " Salary: " + String.format("%.2f", this.getPay()) +
+                " Regular hours: " + String.format("%.2f", regularHours) + " Overtime hours: " + String.format("%.2f", overtime);
     }
 }
 
@@ -112,24 +141,45 @@ class FreelanceEmployee extends Employee {
     }
 
     @Override
-    double calculatePay() {
-        return 0;
+    void calculatePay(Map<String, Double> ticketRateByLevel) {
+        int pointsSum = 0;
+        for (Integer task : this.tickets) {
+            pointsSum += task;
+        }
+        this.setPay(ticketRateByLevel.get(this.getLevel()) * pointsSum);
     }
 
+//    @Override
+//    public int compareTo(Employee o) {
+//        if (this.getPay() <= o.getPay()) {
+//            return -1;
+//        } else if (this.getPay() == o.getPay()) {
+//            return 0;
+//        } else {
+//            return 1;
+//        }
+//    }
+
+
     @Override
-    public int compareTo(Employee o) {
-        if (this.getPay() <= o.getPay()) {
-            return -1;
-        } else if (this.getPay() == o.getPay()) {
-            return 0;
-        } else {
-            return 1;
+    public String toString() {
+        int count = this.tickets.size();
+        int points = 0;
+        for (Integer task : this.tickets) {
+            points += task;
         }
+
+        return "Employee ID: " + this.getId() + " Level: " + this.getLevel() + " Salary: " + String.format("%.2f", this.getPay()) +
+                " Tickets count: " + count + " Tickets points: " + points;
     }
 }
 
 
 class PayrollSystem {
+
+    //  Klasicen primer za polimorfizam, imame lista na Employee objekti,
+    //  ama sekoj employee objekt mora da e kreiran so nekoja od pod-klasite shto ja implmentiraat abstraktnata klasa Employee
+
 
     private List<Employee> employees;
 
@@ -148,15 +198,27 @@ class PayrollSystem {
         while (sc.hasNext()) {
             String employeeData = sc.next();
             if (employeeData.startsWith("H")) {
+
                 String[] data = employeeData.split(";");
-                this.employees.add(new HourlyEmployee(data[1], data[2], Double.parseDouble(data[3])));
+                HourlyEmployee pom = new HourlyEmployee(data[1], data[2], Double.parseDouble(data[3]));
+                pom.calculatePay(hourlyRateByLevel);
+
+                //   Employee test = new Employee();    ----------------> NE FUNKCIONIRA !!! NEMOZE DA SE KREIRA OBJEKT OD ABSTRAKTNA KLASA !!!
+
+                //   Employee test = new HourlyEmployee(data...);  -----> Ova funkionira bidejki HourlyEmployee e obivna klasa koja shto ja implementira Abstraktnata klasa Employee
+
+
+                this.employees.add(pom);
+
             } else if (employeeData.startsWith("F")) {
                 String[] data = employeeData.split(";");
                 ArrayList<Integer> tickets = new ArrayList<>();
                 for (int i = 3; i < data.length; i++) {
                     tickets.add(Integer.parseInt(data[i]));
                 }
-                this.employees.add(new FreelanceEmployee(data[1], data[2], tickets));
+                FreelanceEmployee pom = new FreelanceEmployee(data[1], data[2], tickets);
+                pom.calculatePay(this.ticketRateByLevel);
+                this.employees.add(pom);
             }
         }
     }
@@ -164,11 +226,7 @@ class PayrollSystem {
 
     Map<String, Collection<Employee>> printEmployeesByLevels(OutputStream os, Set<String> levels) {
         return this.employees.stream()
-                .filter(r ->
-                        {
-                            return levels.contains(r.getLevel());
-                        }
-                )
+                .filter(r -> levels.contains(r.getLevel()))
                 .collect(Collectors.groupingBy(
                         Employee::getLevel,
                         TreeMap::new,
