@@ -74,9 +74,7 @@ abstract class Employee implements Comparable<Employee>, iEmployee {
     }
 
     @Override
-    public double calcualatePay() {
-        return 0;
-    }
+    public abstract double calcualatePay();
 
     @Override
     public double calcualateOvertimePay() {
@@ -142,8 +140,6 @@ class HourlyEmployee extends Employee {
         return String.format("%s Regular hours: work on this / Overtime hours: work on this",
                 super.toString()); //", df.format(getRegularHours()), df.format(getOvertimeHours())"
     }
-
-
 
 
 }
