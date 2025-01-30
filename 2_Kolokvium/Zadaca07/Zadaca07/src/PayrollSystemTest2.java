@@ -17,8 +17,8 @@ enum BonusType {
 
 //todo - adjust this
 class BonusNotAllowedException extends Exception {
-    public BonusNotAllowedException(int n) {
-        super("Bonus of not allowed");
+    public BonusNotAllowedException(String n) {
+        super(String.format("Bonus of %s is not allowed", n));
     }
 }
 
@@ -143,10 +143,10 @@ class HourlyEmployee extends Employee {
     public double calcualateOvertimePay() {
         double overtimePay = 0;
 
-        if (hoursWorked < 40) {
+        if (hoursWorked <= 40) {
             return overtimePay;
         } else {
-            overtimePay += (hoursWorked - 40) * 1.5 * this.getRate();
+            overtimePay += (hoursWorked - 40.0) * 1.5 * this.getRate();
         }
 
         return overtimePay;
@@ -190,10 +190,14 @@ class FreelanceEmployee extends Employee {
     }
 
 
-    //todo - if bonus== 0 , do not include
     @Override
     public String toString() {
-        return String.format("%s Tickets count: %d Tickets points: %d Bonus: %.2f", super.toString(), tickets.size(), tickets.stream().mapToInt(x -> x).sum(), this.calcualateBonusPay());
+
+        if (this.getBonus() != 0) {
+            return String.format("%s Tickets count: %d Tickets points: %d Bonus: %.2f", super.toString(), tickets.size(), tickets.stream().mapToInt(x -> x).sum(), this.calcualateBonusPay());
+        } else {
+            return String.format("%s Tickets count: %d Tickets points: %d", super.toString(), tickets.size(), tickets.stream().mapToInt(x -> x).sum());
+        }
     }
 
 
@@ -222,11 +226,11 @@ class PayrollSystem {
         if (input.length == 2) {
             if (input[1].endsWith("%")) {
                 if (Double.parseDouble(input[1].substring(0, input[1].length() - 1)) > 20) {
-                    throw new BonusNotAllowedException();
+                    throw new BonusNotAllowedException(input[1]);
                 }
             } else {
                 if (Double.parseDouble(input[1]) > 1000) {
-                    throw new BonusNotAllowedException();
+                    throw new BonusNotAllowedException(input[1].concat("$"));
                 }
             }
         }
