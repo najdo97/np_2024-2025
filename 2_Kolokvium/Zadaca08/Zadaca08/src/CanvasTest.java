@@ -201,7 +201,6 @@ class Canvas {
     void scaleShapes(String userID, double coef) {
 
         if (!this.users.containsKey(userID)) {
-
             return;
         }
 
@@ -227,7 +226,11 @@ class Canvas {
     void printByUserId(OutputStream os) {
         PrintWriter writer = new PrintWriter(os);
 
-        this.users.forEach((userId, shapes) -> {
+
+        //todo - sort by how many shapes they have created.
+        Map<String, List<Shape>> sortedUsers = new TreeMap<>(this.users);
+
+        sortedUsers.forEach((userId, shapes) -> {
                     writer.println(String.format("Shapes of user: %s ", userId));
                     shapes.forEach(shape -> writer.println(shape.toString()));
                 }
