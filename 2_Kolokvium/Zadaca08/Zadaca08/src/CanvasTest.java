@@ -31,8 +31,8 @@ abstract class Shape implements Comparable<Shape> {
 }
 
 class InvalidIDException extends Exception {
-    public InvalidIDException() {
-        super(String.format("Invalid ID."));
+    public InvalidIDException(String userId) {
+        super(String.format("ID %s is not valid", userId));
     }
 }
 
@@ -156,44 +156,42 @@ class Canvas {
         return true;
     }
 
-    void readShapes(InputStream is) throws InvalidDimensionException, InvalidIDException {
+    void readShapes(InputStream is) throws InvalidDimensionException {
 
         Scanner input = new Scanner(is);
         while (input.hasNext()) {
-            String line = input.nextLine();
-            String[] data = line.split(" ");
+            try {
 
-            if (Double.parseDouble(data[2]) == 0) {
-                throw new InvalidDimensionException();
-            }
 
-            if (Integer.parseInt(data[0]) == 1) {
-                Circle circle = new Circle("Circle", Double.parseDouble(data[2]));
-                this.users.computeIfAbsent(data[1], e -> new ArrayList<>()).add(circle);
-
+                String line = input.nextLine();
+                String[] data = line.split(" ");
                 if (!validUserId(data[1])) {
-                    throw new InvalidIDException();
+                    throw new InvalidIDException(data[1]);
                 }
-
-            } else if (Integer.parseInt(data[0]) == 2) {
-                Square square = new Square("Square", Double.parseDouble(data[2]));
-                this.users.computeIfAbsent(data[1], e -> new ArrayList<>()).add(square);
-
-                if (!validUserId(data[1])) {
-                    throw new InvalidIDException();
-                }
-
-            } else if (Integer.parseInt(data[0]) == 3) {
-
-                if (Double.parseDouble(data[3]) == 0) {
+                if (Double.parseDouble(data[2]) == 0) {
                     throw new InvalidDimensionException();
                 }
-                Rectangle rectangle = new Rectangle("Rectangle", Double.parseDouble(data[2]), Double.parseDouble(data[3]));
-                this.users.computeIfAbsent(data[1], e -> new ArrayList<>()).add(rectangle);
 
-                if (!validUserId(data[1])) {
-                    throw new InvalidIDException();
+                if (Integer.parseInt(data[0]) == 1) {
+                    Circle circle = new Circle("Circle", Double.parseDouble(data[2]));
+                    this.users.computeIfAbsent(data[1], e -> new ArrayList<>()).add(circle);
+
+                } else if (Integer.parseInt(data[0]) == 2) {
+                    Square square = new Square("Square", Double.parseDouble(data[2]));
+                    this.users.computeIfAbsent(data[1], e -> new ArrayList<>()).add(square);
+
+                } else if (Integer.parseInt(data[0]) == 3) {
+
+                    if (Double.parseDouble(data[3]) == 0) {
+                        throw new InvalidDimensionException();
+                    }
+                    Rectangle rectangle = new Rectangle("Rectangle", Double.parseDouble(data[2]), Double.parseDouble(data[3]));
+                    this.users.computeIfAbsent(data[1], e -> new ArrayList<>()).add(rectangle);
                 }
+
+
+            } catch (InvalidIDException e) {
+                System.out.println(e.getMessage());
             }
         }
     }
@@ -203,20 +201,16 @@ class Canvas {
         if (!this.users.containsKey(userID)) {
             return;
         }
-
-        this.users.put(userID,
-                this.users.get(userID)
-                        .stream()
-                        .peek(e -> e.scaleShape(coef))
-                        .collect(Collectors.toList())
-        );
+        this.users.get(userID)
+                .forEach(e -> e.scaleShape(coef));
     }
+
 
     void printAllShapes(OutputStream os) {
         Set<Shape> shapes = this.users.values()
                 .stream()
                 .flatMap(Collection::stream)
-                .collect(Collectors.toCollection(TreeSet::new));
+                .collect(Collectors.toCollection(() -> new TreeSet<Shape>(Shape::compareTo)));
 
         PrintWriter writer = new PrintWriter(os);
         shapes.forEach(shape -> writer.println(shape.toString())); // Print each shape
@@ -224,19 +218,33 @@ class Canvas {
     }
 
     void printByUserId(OutputStream os) {
+
         PrintWriter writer = new PrintWriter(os);
 
 
-        //todo - sort by how many shapes they have created.
-        Map<String, List<Shape>> sortedUsers = new TreeMap<>(this.users);
+        LinkedHashMap<String, List<Shape>> sortedUsers = users.entrySet()
+                .stream()
+                //.sorted(Comparator.comparing((e1, e2) -> Integer.compare(e2.getValue().size(), e1.getValue().size())).thenComparing())
+                .sorted(Comparator.comparingInt((Map.Entry<String,List<Shape>> e)->e.getValue().size()).reversed()
+                        .thenComparing(e->e.getValue()
+                                .stream()
+                                .mapToDouble(Shape::calculateArea).sum()))
+                .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                e -> e.getValue().stream()
+                                        .sorted(Comparator.comparingDouble(Shape::calculatePerimeter))
+                                        .collect(Collectors.toList()),
+                                (e1, e2) -> e1,
+                                LinkedHashMap::new
+                        )
+                );
 
         sortedUsers.forEach((userId, shapes) -> {
                     writer.println(String.format("Shapes of user: %s ", userId));
                     shapes.forEach(shape -> writer.println(shape.toString()));
                 }
         );
-        writer.flush(); // Ensure the output is written
-
+        writer.flush();
 
     }
 
@@ -267,7 +275,7 @@ public class CanvasTest {
 
         try {
             canvas.readShapes(System.in);
-        } catch (InvalidDimensionException | InvalidIDException e) {
+        } catch (InvalidDimensionException e) {
             System.out.println(e.getMessage());
         }
         System.out.println("BEFORE SCALING");
