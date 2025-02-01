@@ -133,9 +133,13 @@ class Stadium {
 
         for (int i = 0; i < sectors.size(); i++) {
             if (sectors.get(i).getSectorId().equals(sectorName)) {
-                if (sectors.get(i).getSectorType().equals(sectorType) ||
-                        sectorType == SectorType.NEUTRAL) {
-                    if (sectors.get(i).getSeats().get(seat - 1).isOccupied() == false) {
+
+                if (sectors.get(i).getSeats().get(seat - 1).isOccupied() == false) {
+                    if (sectors.get(i).getSectorType().equals(sectorType)
+                            || sectors.get(i).getSectorType().equals(SectorType.NEUTRAL)
+                            || sectorType == SectorType.NEUTRAL) {
+
+
                         sectors.get(i).getSeats().get(seat - 1).setOccupied(true);
                         if (sectorType != SectorType.NEUTRAL) {
                             sectors.get(i).setSectorType(sectorType);
@@ -143,10 +147,11 @@ class Stadium {
                         break;
 
                     } else {
-                        throw new SeatTakenException();
+                        throw new SeatNotAllowedException();
                     }
+
                 } else {
-                    throw new SeatNotAllowedException();
+                    throw new SeatTakenException();
                 }
 
             }
@@ -164,7 +169,14 @@ class Stadium {
                 .collect(Collectors.toList());
 
         sortedSectors.forEach(sector ->
-                System.out.println((sector.getSectorId() + " - Free Seats: " + (sector.getCapacity() - sector.getSeats().stream().mapToInt(e -> e.isOccupied() ? 1 : 0).sum()))));
+                System.out.println((sector.getSectorId()
+                        + "\\" + "t"
+                        + (sector.getCapacity() - sector.getSeats().stream().mapToInt(e -> e.isOccupied() ? 1 : 0).sum())
+                        + "/"
+                        +sector.getCapacity()
+                        + "\\" + "t" +String.format ("%.1f",(sector.getSeats().stream().mapToInt(e -> e.isOccupied() ? 1 : 0).sum() * 100.0 / sector.getCapacity()))
+                        + "%"
+                )));
     }
 
 }
