@@ -119,19 +119,27 @@ class Stadium {
         SectorType sectorType = SectorType.NEUTRAL;
 
         switch (type) {
+            case 0:
+                sectorType = SectorType.NEUTRAL;
+                break;
             case 1:
                 sectorType = SectorType.HOME;
+                break;
             case 2:
                 sectorType = SectorType.AWAY;
+                break;
         }
 //todo - losho e kastira sectorType
-        
+
         for (int i = 0; i < sectors.size(); i++) {
             if (sectors.get(i).getSectorId().equals(sectorName)) {
-                if (sectors.get(i).getSectorType().equals(sectorType) || sectors.get(i).getSectorType().equals(SectorType.NEUTRAL)) {
+                if (sectors.get(i).getSectorType().equals(sectorType) ||
+                        sectorType == SectorType.NEUTRAL) {
                     if (sectors.get(i).getSeats().get(seat - 1).isOccupied() == false) {
                         sectors.get(i).getSeats().get(seat - 1).setOccupied(true);
-                        sectors.get(i).setSectorType(sectorType);
+                        if (sectorType != SectorType.NEUTRAL) {
+                            sectors.get(i).setSectorType(sectorType);
+                        }
                         break;
 
                     } else {
