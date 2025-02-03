@@ -79,19 +79,22 @@ class User {
         return timeOfInfection;
     }
 
-    public boolean calculateProximity(User u) {
+
+    public int calculateProximityCounter(User u) {
+        int counter = 0;
         for (int i = 0; i < this.knownLocations.size(); i++) {
             Location location1 = this.knownLocations.get(i);
             for (int j = 0; j < u.knownLocations.size(); j++) {
                 Location location2 = u.knownLocations.get(j);
                 double distance = Math.sqrt(Math.pow(location1.getLongitude() - location2.getLongitude(), 2) + Math.pow(location1.getLatitude() - location2.getLatitude(), 2));
                 if (distance <= 2) {
-                    return true;
+                    counter++;
                 }
             }
         }
-        return false;
+        return counter;
     }
+
 }
 
 class StopCoronaApp {
@@ -140,25 +143,21 @@ class StopCoronaApp {
         // што ќе враќа мапа во која што клучеви ќе се сите блиски контакти на корисикот u,
         // а соодветните вредности во мапата ќе се колку пати се оствариле блиски контакти со корисникот u.
 
-        List<User> closeContacts =
-                this.people.values()
-                        .stream()
-                        .filter(user -> {
-                            Duration duration = Duration.between(user.getTimeOfInfection(), u.getTimeOfInfection());
-                            return Math.abs(duration.toMinutes()) < 5;
-                        })
-                        .filter(user -> {
-                            return user.calculateProximity(u);
-                        })
-                        .collect(Collectors.toList());
-
-        return closeContacts
+        return this.people.values()
                 .stream()
-                .collect(Collectors.groupingBy(
-                        user -> user,
-                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)
+                .filter(user -> {
+                    Duration duration = Duration.between(user.getTimeOfInfection(), u.getTimeOfInfection());
+                    return Math.abs(duration.toMinutes()) < 5;
+                })
+                .filter(user -> {
+                    if (user.calculateProximityCounter(u) > 0) {
+                        return true;
+                    } else return false;
+                })
+                .collect(Collectors.toMap(
+                        user->user,
+                        user->user.calculateProximityCounter(u)
                 ));
-
     }
 
     Collection<User> getIndirectContacts(User u) {
