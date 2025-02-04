@@ -4,8 +4,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-class UserIdAlreadyExistsException extends Exception {
-
+class UserAlreadyExistException extends Exception {
+    public UserAlreadyExistException(String message) {
+        super(String.format("User with id " + message + " already exists"));
+    }
 }
 
 interface ILocation {
@@ -45,13 +47,15 @@ class Location implements ILocation {
 }
 
 class User {
+    private String userId;
     private String name;
     private List<Location> knownLocations;
 
     private boolean isInfected;
     private LocalDateTime timeOfInfection;
 
-    public User(String name) {
+    public User(String name, String userId) {
+        this.userId = userId;
         this.name = name;
         this.knownLocations = new ArrayList<>();
     }
@@ -69,6 +73,18 @@ class User {
     public void detectInfection(LocalDateTime timeOfInfection) {
         this.isInfected = true;
         this.timeOfInfection = timeOfInfection;
+    }
+
+    public boolean isInfected() {
+        return isInfected;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getUserId() {
+        return userId;
     }
 
     public List<Location> getKnownLocations() {
@@ -95,6 +111,11 @@ class User {
         return counter;
     }
 
+
+    @Override
+    public String toString() {
+        return String.format(this.name + " " + this.getUserId().substring(0, 3) + "***");
+    }
 }
 
 class StopCoronaApp {
@@ -107,12 +128,12 @@ class StopCoronaApp {
     }
 
 
-    public void addUser(String name, String id) throws UserIdAlreadyExistsException {
+    public void addUser(String name, String id) throws UserAlreadyExistException {
 
         if (this.people.get(id) != null) {
-            throw new UserIdAlreadyExistsException();
+            throw new UserAlreadyExistException(id);
         }
-        this.people.put(id, new User(name));
+        this.people.put(id, new User(name, id));
     }
 
     void addLocations(String id, List<ILocation> iLocations) {
@@ -145,6 +166,7 @@ class StopCoronaApp {
 
         return this.people.values()
                 .stream()
+                .filter(user -> user.getTimeOfInfection() != null)
                 .filter(user -> {
                     Duration duration = Duration.between(user.getTimeOfInfection(), u.getTimeOfInfection());
                     return Math.abs(duration.toMinutes()) < 5;
@@ -155,34 +177,68 @@ class StopCoronaApp {
                     } else return false;
                 })
                 .collect(Collectors.toMap(
-                        user->user,
-                        user->user.calculateProximityCounter(u)
+                        user -> user,
+                        user -> user.calculateProximityCounter(u)
                 ));
     }
 
     Collection<User> getIndirectContacts(User u) {
         //што ќе враќа колекција од индиректните контакти на корисникот u. За индиректни контакти се сметаат блиските контакти на директните контакти на u,
         // при што еден корисник не може да биде и директен и индиректен контакт на некој друг корисник.
+        Map<User, Integer> getMapDirectContacts = getDirectContacts(u);
+
+        Set<User> indirectContacts = getMapDirectContacts.keySet();
+
+        Collection<User> result = indirectContacts
+                .stream()
+                .map(user -> getDirectContacts(user))
+                .map(map -> map.keySet())
+                .flatMap(set -> set.stream())
+                .distinct()
+                .collect(Collectors.toList());
+
+        return result;
     }
 
+    Comparator<User> sortingInfected = new Comparator<User>() {
+        @Override
+        public int compare(User o1, User o2) {
+            if (o1.getTimeOfInfection().isBefore(o2.getTimeOfInfection())) {
+                return -1;
+            } else if (o1.getTimeOfInfection().isEqual(o2.getTimeOfInfection())) {
+                return 0;
+            } else return 1;
+        }
+    };
+
     void createReport() {
-        // што ќе креира и испечати извештај за МЗ во којшто за сите корисници-носители на вирусот ќе испечати информации во следниот формат.
+        this.people.values()
+                .stream()
+                .filter(u -> u.isInfected())
+                .sorted(sortingInfected)
+                .forEach(u -> {
+                    System.out.println(u.getName() + " " + u.getUserId() + " " + u.getTimeOfInfection());
 
-        //[user_name] [user_id] [timestamp_detected]
-        //Direct contacts:
-        //[contact1_name] [contact1_first_five_letters_of_id] [number_of_detected_contacts1]
-        //[contact2_name] [contact2_first_five_letters_of_id] [number_of_detected_contacts1]
-        //...
-        //[contactN_name] [contactN_first_five_letters_of_id] [number_of_detected_contactsN]
-        //Count of direct contacts: [sum]
-        //Indirect contacts:
-        //[contact1_name] [contact1_first_five_letters_of_id]
-        //[contact2_name] [contact2_first_five_letters_of_id]
-        //...
-        //[contactN_name] [contactN_first_five_letters_of_id]
-        //Count of indirect contacts: [count]
+                    System.out.println("Direct contacts:");
 
-        //Дополнително на крајот на извештајот да се испечати просечниот број на директни и индиректни контакти на корисниците што се носители на Корона вирусот.
+                    Map<User, Integer> pom = this.getDirectContacts(u);
+                    pom.forEach((key, value) -> {
+                        System.out.println(key.toString() + " " + value);
+                    });
+                    System.out.println("Count of direct contacts: " + pom.keySet().size());
+
+                    List<User> indirectContacts = getIndirectContacts(u).stream().collect(Collectors.toList());
+
+                    indirectContacts.forEach(value -> {
+                        System.out.println(value.toString());
+                    });
+                    System.out.println("Count of indirect contacts: " + indirectContacts.size());
+
+                });
+
+        System.out.println("Average direct contacts: ?");
+        System.out.println("Average indirect contacts: ?");
+
     }
 
 
