@@ -1,7 +1,9 @@
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 class DeadlineNotValidException extends Exception {
     public DeadlineNotValidException(String message) {
@@ -97,7 +99,7 @@ class TaskManager {
 
             try {
                 LocalDateTime cutOffDate = LocalDateTime.parse("2020-06-02T00:00:00.000");
-
+//todo - tuka !!
                 if (!task.getDeadline().isBefore(cutOffDate)) {
                     throw new DeadlineNotValidException("Kasnish mali");
                 } else {
@@ -120,9 +122,44 @@ class TaskManager {
 //        При печатењето на задачите се користи default опцијата за toString (доколку работите вo IntelliJ),
 //        со тоа што треба да внимавате на името на променливите.
 
+        Comparator<Task> comparePriority = new Comparator<Task>() {
+            @Override
+            public int compare(Task o1, Task o2) {
+                if(o1.getPriority()==0 && o2.getPriority()==0){
+                    return 0;
+                }else if(o1.getPriority()==0){
+                    return
+                }
+
+
+                if (o1.getPriority() < o2.getPriority()) {
+                    return -1;
+                } else if (o1.getPriority() > o2.getPriority()) {
+                    return 1;
+                } else return 0;
+            }
+        };
 
         //System.out.println("By categories with priority");
-        if (includePriority == true && includeCategory == true) {
+        if (includePriority && includeCategory) {
+            HashMap<String, List<Task>> separatedTasks =
+                    this.tasks
+                            .stream()
+                            .collect(Collectors.groupingBy(
+                                            u -> u.getCategory(),
+                                            HashMap::new,
+                                            Collectors.toList()
+                                    )
+                            );
+            separatedTasks.forEach((key, value) -> {
+                value.sort(comparePriority);
+            });
+
+            PrintWriter pw = new PrintWriter(os);
+            separatedTasks.forEach((key, value) -> {
+                        value.forEach(u -> pw.println(u.toString()));
+                    }
+            );
 
         }
 
