@@ -1,3 +1,5 @@
+import jdk.jfr.Category;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -16,14 +18,15 @@ class Task {
     private String taskName;
     private String description;
     private LocalDateTime deadline;
-    private int priority;
+    private Optional<Integer> priority;
 
     public Task(String category, String taskName, String description) {
         this.category = category;
         this.taskName = taskName;
         this.description = description;
         this.deadline = null;
-        this.priority = 0;
+        this.priority = Optional.empty();
+
     }
 
     public Task(String category, String taskName, String description, LocalDateTime deadline) {
@@ -31,7 +34,7 @@ class Task {
         this.taskName = taskName;
         this.description = description;
         this.deadline = deadline;
-        this.priority = 0;
+        this.priority = Optional.empty();
     }
 
     public Task(String category, String taskName, String description, int priority) {
@@ -39,7 +42,7 @@ class Task {
         this.taskName = taskName;
         this.description = description;
         this.deadline = null;
-        this.priority = priority;
+        this.priority = Optional.of(priority);
     }
 
     public Task(String category, String taskName, String description, LocalDateTime deadline, int priority) {
@@ -47,7 +50,7 @@ class Task {
         this.taskName = taskName;
         this.description = description;
         this.deadline = deadline;
-        this.priority = priority;
+        this.priority = Optional.of(priority);
     }
 
 
@@ -67,8 +70,23 @@ class Task {
         return deadline;
     }
 
-    public int getPriority() {
+    public Optional<Integer> getPriority() {
         return priority;
+    }
+
+    @Override
+    public String toString() {
+
+        if (deadline == null && priority.isEmpty()) {
+            return "Task{" + "name='" + taskName + '\'' + ", description='" + description + '\'' + '}';
+        } else if (deadline != null && priority.isEmpty()) {
+            return "Task{" + "name='" + taskName + '\'' + ", description='" + description + '\'' + ", deadline=" + deadline + '}';
+        } else if (deadline == null && !priority.isEmpty()) {
+            return "Task{" + "name='" + taskName + '\'' + ", description='" + description + '\'' + ", priority=" + priority.get() + '}';
+        } else {
+            return "Task{" + "name='" + taskName + '\'' + ", description='" + description + '\'' + ", deadline=" + deadline + ", priority=" + priority.get() + '}';
+        }
+
     }
 }
 
@@ -76,12 +94,25 @@ class TaskManager {
 
     private List<Task> tasks;
 
+    public TaskManager() {
+        this.tasks = new ArrayList<>();
+    }
+
+    public TaskManager(List<Task> tasks) {
+        this.tasks = tasks;
+    }
+
     void readTasks(InputStream inputStream) {
 
         Scanner sc = new Scanner(inputStream);
 
         while (sc.hasNext()) {
-            String[] input = sc.next().split(",");
+            String line = sc.nextLine().trim();
+            if (line.isBlank()) {
+                continue;
+            }
+            String[] input = line.split(",");
+
             Task task;
             if (input.length == 3) {
                 task = new Task(input[0], input[1], input[2]);
@@ -97,46 +128,39 @@ class TaskManager {
                 task = new Task(input[0], input[1], input[2], date, Integer.parseInt(input[4]));           //cetvrtiot parametar e prioritetot
             }
 
-            try {
-                LocalDateTime cutOffDate = LocalDateTime.parse("2020-06-02T00:00:00.000");
-//todo - tuka !!
-                if (!task.getDeadline().isBefore(cutOffDate)) {
-                    throw new DeadlineNotValidException("Kasnish mali");
-                } else {
-                    this.tasks.add(task);
-                }
-            } catch (DeadlineNotValidException d) {
-                System.out.println(d.getMessage());
-            }
+            this.tasks.add(task);
+
+
+//            try {
+//                LocalDateTime cutOffDate = LocalDateTime.parse("2020-06-02T00:00:00.000");
+//
+//                if (task.getDeadline() == null) {
+//                    this.tasks.add(task);
+//                } else if (!task.getDeadline().isBefore(cutOffDate)) {
+//                    throw new DeadlineNotValidException("Kasnish mali");
+//                } else {
+//                    this.tasks.add(task);
+//                }
+//            } catch (DeadlineNotValidException d) {
+//                System.out.println(d.getMessage());
+//            }
         }
     }
 
     void printTasks(OutputStream os, boolean includePriority, boolean includeCategory) {
-//        Доколку includeCategory e true да се испечатат задачите групирани според категории, во спротивно се печатат сите внесени задачи
-//
-//        Доколку includePriority e true да се испечатат задачите сортирани според приоритетот (при што 1 е највисок приоритет),
-//        a немаат приоритет или имаат ист приоритет се сортираат растечки според временското растојание помеѓу рокот и моменталниот датум,
-//        односно задачите со рок најблизок до денешниот датум се печатат први.
-//
-//        Доколку includePriority e false се печатат во растечки редослед според временското растојание помеѓу рокот и моменталниот датум.
-//        При печатењето на задачите се користи default опцијата за toString (доколку работите вo IntelliJ),
-//        со тоа што треба да внимавате на името на променливите.
 
         Comparator<Task> comparePriority = new Comparator<Task>() {
             @Override
             public int compare(Task o1, Task o2) {
-                if(o1.getPriority()==0 && o2.getPriority()==0){
+                if (!o1.getPriority().isPresent() && !o2.getPriority().isPresent()) {
                     return 0;
-                }else if(o1.getPriority()==0){
-                    return
+                } else if (!o1.getPriority().isPresent()) {
+                    return 1;
+                } else if (!o2.getPriority().isPresent()) {
+                    return -1;
                 }
 
-
-                if (o1.getPriority() < o2.getPriority()) {
-                    return -1;
-                } else if (o1.getPriority() > o2.getPriority()) {
-                    return 1;
-                } else return 0;
+                return Integer.compare(o1.getPriority().orElse(Integer.MAX_VALUE), o2.getPriority().orElse(Integer.MAX_VALUE));
             }
         };
 
@@ -156,26 +180,69 @@ class TaskManager {
             });
 
             PrintWriter pw = new PrintWriter(os);
-            separatedTasks.forEach((key, value) -> {
-                        value.forEach(u -> pw.println(u.toString()));
-                    }
-            );
+            separatedTasks.keySet()
+                    .stream()
+                    .forEach(category -> {
+                        List<Task> tasks = separatedTasks.get(category);
+                        pw.println(category.toUpperCase());
+                        tasks.forEach(t -> {
+                            pw.println(t.toString());
+                        });
+                    });
 
+            pw.flush();
         }
 
         //System.out.println("By categories WITHOUT priority");
         if (includePriority == false && includeCategory == true) {
 
+
+            PrintWriter pw = new PrintWriter(os);
+
+            HashMap<String, List<Task>> separatedTasks =
+                    this.tasks
+                            .stream()
+                            .collect(
+                                    Collectors.groupingBy(
+                                            u -> u.getCategory(),
+                                            HashMap::new,
+                                            Collectors.toList()
+                                    )
+                            );
+            separatedTasks.keySet().forEach(e -> {
+                List<Task> lista = separatedTasks.get(e);
+                pw.println(e.toUpperCase());
+                lista.forEach(v -> {
+                    pw.println(v.toString());
+                });
+            });
+
+            pw.flush();
         }
 
         // System.out.println("All tasks without priority");
         if (includePriority == false && includeCategory == false) {
+            PrintWriter pw = new PrintWriter(os);
 
+            this.tasks.stream()
+                    .forEach(t -> {
+                        pw.println(t.toString());
+                    });
+
+            pw.flush();
+            ;
         }
 
         //System.out.println("All tasks with priority");
         if (includePriority == true && includeCategory == false) {
-
+            PrintWriter pw = new PrintWriter(os);
+            this.tasks.stream()
+                    .sorted(comparePriority)
+                    .forEach(t ->
+                    {
+                        pw.println(t.toString());
+                    });
+            pw.flush();
         }
 
 
