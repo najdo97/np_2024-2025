@@ -17,10 +17,10 @@ class TextProcessor {
         Scanner sc = new Scanner(is);
         while (sc.hasNextLine()) {
             String inputLine = sc.nextLine();
-
             String[] inputLineWords = inputLine.split(" ");
+            List<String> sentance = new ArrayList<>();
             for (int i = 0; i < inputLineWords.length; i++) {
-
+                sentance = new ArrayList<>();
                 StringBuilder sb = new StringBuilder();
                 String word;
                 for (int j = 0; j < inputLineWords[i].length(); j++) {
@@ -29,13 +29,11 @@ class TextProcessor {
                     }
                 }
                 word = sb.toString();
-                this.textLines.add()
+                sentance.add(word);
                 this.dictionary.put(word, this.dictionary.getOrDefault(word, 0) + 1);
             }
-
-
+            textLines.add(sentance);
         }
-
     }
 
     void printTextsVectors(OutputStream os) {
