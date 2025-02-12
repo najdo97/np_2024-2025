@@ -17,10 +17,13 @@ class TextProcessor {
         Scanner sc = new Scanner(is);
         while (sc.hasNextLine()) {
             String inputLine = sc.nextLine();
+            if (inputLine.isBlank()) {
+                break;
+            }
             String[] inputLineWords = inputLine.split(" ");
             List<String> sentance = new ArrayList<>();
             for (int i = 0; i < inputLineWords.length; i++) {
-                sentance = new ArrayList<>();
+
                 StringBuilder sb = new StringBuilder();
                 String word;
                 for (int j = 0; j < inputLineWords[i].length(); j++) {
@@ -29,23 +32,104 @@ class TextProcessor {
                     }
                 }
                 word = sb.toString();
+                //  if (!word.isBlank()) {
                 sentance.add(word);
                 this.dictionary.put(word, this.dictionary.getOrDefault(word, 0) + 1);
+                //   }
             }
             textLines.add(sentance);
         }
     }
 
+
+    public List<Integer> getVector(List<String> words) {
+
+        HashMap<String, Integer> wordsInSentence = new HashMap<>();
+        for (int j = 0; j < words.size(); j++) {
+            wordsInSentence.put(
+                    words.get(j),
+                    wordsInSentence.getOrDefault(words.get(j), 0) + 1);
+        }
+        List<Integer> vector = new ArrayList<>();
+        this.dictionary.forEach((key, value) -> {
+            if (wordsInSentence.containsKey(key)) {
+                vector.add(wordsInSentence.get(key));
+            } else {
+                vector.add(0);
+            }
+        });
+        return vector;
+    }
+
     void printTextsVectors(OutputStream os) {
+        for (int i = 0; i < this.textLines.size(); i++) {
+
+            System.out.println(getVector(this.textLines.get(i)));
+
+//            HashMap<String, Integer> wordsInSentence = new HashMap<>();
+//            for (int j = 0; j < this.textLines.get(i).size(); j++) {
+//                wordsInSentence.put(
+//                        this.textLines.get(i).get(j),
+//                        wordsInSentence.getOrDefault(this.textLines.get(i).get(j), 0) + 1);
+//            }
+//            List<Integer> vector = new ArrayList<>();
+//            this.dictionary.forEach((key, value) -> {
+//                if (wordsInSentence.containsKey(key)) {
+//                    vector.add(wordsInSentence.get(key));
+//                } else {
+//                    vector.add(0);
+//                }
+//            });
+//            System.out.println(vector);
+//
+        }
 
     }
 
     void printCorpus(OutputStream os, int n, boolean ascending) {
 
+        if (ascending) {
+            this.dictionary.entrySet()
+                    .stream()
+                    .sorted(Comparator.comparing(Map.Entry::getValue))
+                    .limit(n)
+                    .forEach(entry -> {
+                        System.out.println(entry.getKey() + " : " + entry.getValue());
+                    });
+        } else {
+            this.dictionary.entrySet()
+                    .stream()
+                    .sorted(Comparator.comparing(Map.Entry<String, Integer>::getValue).reversed())
+                    .limit(n)
+                    .forEach(entry -> {
+                        System.out.println(entry.getKey() + " : " + entry.getValue());
+                    });
+        }
     }
 
 
     public void mostSimilarTexts(OutputStream os) {
+        double mostSimilar = 0.0;
+        double tmp = 0;
+        CosineSimilarityCalculator calc = new CosineSimilarityCalculator();
+
+        List<String> sentance1 = new ArrayList<>();
+        List<String> sentance2 = new ArrayList<>();
+        for (int i = 0; i < this.textLines.size(); i++) {
+            for (int j = i + 1; j < this.textLines.size() - 1; j++) {
+
+                tmp = calc.cosineSimilarity(getVector(this.textLines.get(i)), getVector(this.textLines.get(j)));
+                if (tmp > mostSimilar) {
+                    mostSimilar = tmp;
+                    sentance1 = this.textLines.get(i);
+                    sentance2 = this.textLines.get(j);
+                }
+            }
+        }
+
+        System.out.println(sentance1);
+        System.out.println(sentance2);
+        System.out.println(mostSimilar);
 
     }
 }
