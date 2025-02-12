@@ -4,12 +4,15 @@ import java.util.*;
 
 class TextProcessor {
 
+    List<String> originalTextLines;
     List<List<String>> textLines;
     TreeMap<String, Integer> dictionary;
 
     public TextProcessor() {
         this.dictionary = new TreeMap<>();
         this.textLines = new ArrayList<>();
+        this.originalTextLines = new ArrayList<>();
+
     }
 
 
@@ -20,6 +23,7 @@ class TextProcessor {
             if (inputLine.isBlank()) {
                 break;
             }
+            originalTextLines.add(inputLine);
             String[] inputLineWords = inputLine.split(" ");
             List<String> sentance = new ArrayList<>();
             for (int i = 0; i < inputLineWords.length; i++) {
@@ -32,10 +36,10 @@ class TextProcessor {
                     }
                 }
                 word = sb.toString();
-                //  if (!word.isBlank()) {
-                sentance.add(word);
-                this.dictionary.put(word, this.dictionary.getOrDefault(word, 0) + 1);
-                //   }
+                if (!word.isBlank()) {
+                    sentance.add(word);
+                    this.dictionary.put(word, this.dictionary.getOrDefault(word, 0) + 1);
+                }
             }
             textLines.add(sentance);
         }
@@ -109,27 +113,26 @@ class TextProcessor {
 
 
     public void mostSimilarTexts(OutputStream os) {
-        double mostSimilar = 0.0;
-        double tmp = 0;
         CosineSimilarityCalculator calc = new CosineSimilarityCalculator();
-
-        List<String> sentance1 = new ArrayList<>();
-        List<String> sentance2 = new ArrayList<>();
+        double mostSimilar = calc.cosineSimilarity(getVector(this.textLines.get(0)), getVector(this.textLines.get(1)));
+        double tmp = 0;
+        String sentance1 = this.originalTextLines.get(0);
+        String sentance2 = this.originalTextLines.get(1);
         for (int i = 0; i < this.textLines.size(); i++) {
             for (int j = i + 1; j < this.textLines.size() - 1; j++) {
 
                 tmp = calc.cosineSimilarity(getVector(this.textLines.get(i)), getVector(this.textLines.get(j)));
                 if (tmp > mostSimilar) {
                     mostSimilar = tmp;
-                    sentance1 = this.textLines.get(i);
-                    sentance2 = this.textLines.get(j);
+                    sentance1 = this.originalTextLines.get(i);
+                    sentance2 = this.originalTextLines.get(j);
                 }
             }
         }
 
         System.out.println(sentance1);
         System.out.println(sentance2);
-        System.out.println(mostSimilar);
+        System.out.println(String.format("%.10f",mostSimilar));
 
     }
 }
