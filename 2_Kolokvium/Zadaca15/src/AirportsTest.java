@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 class Flight {
@@ -26,36 +27,47 @@ class Airport {
         this.flights = new ArrayList<>();
     }
 
-    public Airport(String name, String country, String code, int passengers, List<Flight> flights) {
+    public Airport(String name, String country, String code, int passengers) {
         this.name = name;
         this.country = country;
         this.code = code;
         this.passengers = passengers;
-        this.flights = flights;
+        this.flights = new ArrayList<>();
     }
-
 }
 
-
 class Airports {
-    public Airports() {
+    HashMap<String, Airport> airports;
 
+    public Airports() {
+        this.airports = new HashMap<>();
     }
 
     public void addAirport(String name, String country, String code, int passengers) {
+        this.airports.put(code, new Airport(name, country, code, passengers));
     }
 
     public void addFlights(String from, String to, int time, int duration) {
-
+        this.airports.get(from).flights.add(new Flight(from, to, time, duration));
     }
 
     public void showFlightsFromAirport(String code) {
-
+        this.airports.get(code).flights.forEach(flight -> {
+            System.out.println(flight.from + "-" + flight.to + " " + flight.duration);
+        });
     }
 
     public void showDirectFlightsFromTo(String from, String to) {
 
+        ArrayList<Flight> requestedAirports = this.airports.get(from).flights
+                .stream()
+                .filter(flight -> flight.to.equals(to))
+                .collect(Collectors.toCollection(ArrayList::new));
+        requestedAirports.forEach(flight -> {
+            System.out.println(flight.from + "-" + flight.to + " " + flight.duration);
+        });
     }
+
 
     public void showDirectFlightsTo(String to) {
 
