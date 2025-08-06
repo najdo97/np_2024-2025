@@ -21,10 +21,14 @@ import java.util.*;
 
 class Block<T> {
 
-    ArrayList<T> data;
+    private ArrayList<T> data;
 
     public Block() {
         this.data = new ArrayList<>();
+    }
+
+    ArrayList<T> getData() {
+        return this.data;
     }
 
     int getDataSize() {
@@ -34,6 +38,7 @@ class Block<T> {
     void addData(T value) {
         this.data.add(value);
     }
+
 
 }
 
@@ -47,9 +52,9 @@ class BlockContainer<T> {
     } //- конструктор со еден аргумент, максималниот број на елементи во блокот
 
     public void add(T a) {
-        if (container.get(container.size() - 1).getDataSize() < max_size) {
+        if (!container.isEmpty() && container.get(container.size() - 1).getDataSize() < max_size) {
             container.get(container.size() - 1).addData(a);
-        }else{
+        } else {
             container.add(new Block<T>());
             container.get(container.size() - 1).addData(a);
         }
@@ -57,7 +62,23 @@ class BlockContainer<T> {
     }//- метод за додавање елемент во последниот блок од контејнерот (ако блокот е полн, се додава нов блок)
 
     public boolean remove(T a) {
+        if (container.isEmpty()) {
+            return false;
+        }
+        if (container.get(container.size() - 1).getData().isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < container.get(container.size() - 1).getData().size(); i++) {
+            if (container.get(container.size() - 1).getData().get(i).equals(a)) {
+                container.get(container.size() - 1).getData().remove(i);
 
+                if (this.container.get(container.size() - 1).getDataSize() == 0) {
+                    this.container.remove(container.size() - 1);
+                }
+                return true;
+            }
+        }
+        return false;
     }// - метод за бришње на елемент од последниот блок (ако се избришат сите елементи од еден блок, тогаш и блокот се брише)
 
     public void sort() {
