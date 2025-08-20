@@ -18,16 +18,17 @@ public String toString() - препокривање на методот да в�
 
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 class Block<T> {
 
-    private ArrayList<T> data;
+    private List<T> data;
 
     public Block() {
         this.data = new ArrayList<>();
     }
 
-    ArrayList<T> getData() {
+    List<T> getData() {
         return this.data;
     }
 
@@ -39,6 +40,13 @@ class Block<T> {
         this.data.add(value);
     }
 
+    void setData(int position, T data) {
+        this.data.set(position, data);
+    }
+
+    void sort() {
+        this.data = this.data.stream().sorted().collect(Collectors.toList());
+    }
 
 }
 
@@ -54,9 +62,11 @@ class BlockContainer<T> {
     public void add(T a) {
         if (!container.isEmpty() && container.get(container.size() - 1).getDataSize() < max_size) {
             container.get(container.size() - 1).addData(a);
+            container.get(container.size() - 1).sort();
         } else {
             container.add(new Block<T>());
             container.get(container.size() - 1).addData(a);
+
         }
 
     }//- метод за додавање елемент во последниот блок од контејнерот (ако блокот е полн, се додава нов блок)
@@ -82,11 +92,30 @@ class BlockContainer<T> {
     }// - метод за бришње на елемент од последниот блок (ако се избришат сите елементи од еден блок, тогаш и блокот се брише)
 
     public void sort() {
+        List<T> pom = this.container
+                .stream()
+                .map(block -> block.getData())
+                .flatMap(Collection::stream)
+                .sorted()
+                .collect(Collectors.toList());
 
+        int z = 0;
+        for (int i = 0; i < this.container.size(); i++) {
+
+            for (int j = 0; j < max_size; j++) {
+                if (z < pom.size()) {
+                    this.container.get(i).setData(j, pom.get(z));
+                    z++;
+                }
+            }
+        }
     }// -    метод за сортирање на сите елементи во контејнерот
 
     public String toString() {
-
+        return this.container
+                .stream()
+                .map(x -> x.getData().toString())
+                .collect(Collectors.joining(","));
     } // -    препокривање на методот да враќа String во следниот формат:пример:[7,8,9],[1,2,3],[5,6,12],[4,10,8]
 
 
