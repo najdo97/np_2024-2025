@@ -11,11 +11,32 @@ y - float
 Растојанието помеѓу две Point2D точки се пресметува со формулата за Евклидово растојание $\sqrt{{(x1 - x2)^2} + {(y1 - y2)^2}}$
 * */
 
+
 import java.util.*;
 
-/**
- * January 2016 Exam problem 2
- */
+class Point2D {
+    long id;
+    float x;
+    float y;
+
+}
+
+class Cluster<T> {
+
+
+
+
+    void addItem(T elemenet) {
+
+    }
+
+    void near(long id, int top) {
+
+    }
+
+}
+
+
 public class ClusterTest {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -181,7 +202,6 @@ public class ClusterTest {
 //139 1.138225 10.168114
 //140 4.419144 -5.268430
 //34 7
-
 
 
 //Result:
