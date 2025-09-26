@@ -48,7 +48,8 @@ class Cluster<T> {
     }
 
     void near(long id, int top) {
-        List<Double> distances = new ArrayList<>();
+        HashMap<Long, Double> points_distances = new HashMap<>();
+        List<Map.Entry<Long, Double>> distances;
         for (T element : elements) {
             if (element instanceof Point2D) {
                 Point2D target = (Point2D) element;
@@ -56,18 +57,19 @@ class Cluster<T> {
                     for (int j = 0; j < this.elements.size(); j++) {
                         if (elements.get(j) instanceof Point2D) {
                             Point2D potentialTarget = (Point2D) elements.get(j);
-                            distances.add(calculate_distance(target, potentialTarget));
+                            points_distances.put(potentialTarget.getId(), calculate_distance(target, potentialTarget));
                         }
-                        break;
                     }
+                    break;
                 }
-            }
-            Collections.sort(distances);
-            for (int i = 0; i < top; i++) {
-                System.out.println(distances.get(i));
             }
         }
 
+        distances = points_distances.entrySet().stream().sorted(Map.Entry.comparingByValue()).collect(Collectors.toList());
+
+        for (int i = 1; i <= top; i++) {
+            System.out.printf("%d. %d -> %.3f \n",i, distances.get(i).getKey(), distances.get(i).getValue());
+        }
     }
 }
 
