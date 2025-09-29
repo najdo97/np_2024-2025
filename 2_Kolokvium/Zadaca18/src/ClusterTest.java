@@ -1,7 +1,13 @@
 import java.util.*;
 import java.util.stream.Collectors;
 
-class Point2D {
+interface clusterElement<T> {
+    long getId();
+
+    double distanceTo(T other);
+}
+
+class Point2D implements clusterElement<Point2D> {
 
     private long id;
     private float x;
@@ -18,6 +24,13 @@ class Point2D {
         return id;
     }
 
+    @Override
+    public double distanceTo(Point2D other) {
+        return Math.sqrt(
+                (Math.pow(this.x - other.x, 2))
+                        + Math.pow(this.y - other.y, 2));
+    }
+
     public float getX() {
         return x;
     }
@@ -27,7 +40,7 @@ class Point2D {
     }
 }
 
-class Cluster<T> {
+class Cluster<T extends clusterElement<T>> {
 
     List<T> elements;
 
@@ -35,40 +48,34 @@ class Cluster<T> {
         this.elements = new ArrayList<>();
     }
 
-    public Cluster(List<T> elements) {
-        this.elements = elements;
-    }
-
     void addItem(T elemenet) {
         this.elements.add(elemenet);
-    }
-
-    double calculate_distance(Point2D target, Point2D potentialTarget) {
-        return Math.sqrt((Math.pow(target.getX() - potentialTarget.getX(), 2)) + Math.pow(target.getY() - potentialTarget.getY(), 2));
     }
 
     void near(long id, int top) {
         HashMap<Long, Double> points_distances = new HashMap<>();
         List<Map.Entry<Long, Double>> distances;
-        for (T element : elements) {
-            if (element instanceof Point2D) {
-                Point2D target = (Point2D) element;
-                if (target.getId() == id) {
-                    for (int j = 0; j < this.elements.size(); j++) {
-                        if (elements.get(j) instanceof Point2D) {
-                            Point2D potentialTarget = (Point2D) elements.get(j);
-                            points_distances.put(potentialTarget.getId(), calculate_distance(target, potentialTarget));
-                        }
-                    }
-                    break;
+        for (T target : elements) {
+            if (target.getId() == id) {
+                for (T potentialTarget : this.elements) {
+                    points_distances.put(
+                            potentialTarget.getId(),
+                            target.distanceTo(potentialTarget)
+                    );
+
                 }
+                break;
             }
+
         }
 
-        distances = points_distances.entrySet().stream().sorted(Map.Entry.comparingByValue()).collect(Collectors.toList());
+        distances = points_distances.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toList());
 
         for (int i = 1; i <= top; i++) {
-            System.out.printf("%d. %d -> %.3f \n",i, distances.get(i).getKey(), distances.get(i).getValue());
+            System.out.printf("%d. %d -> %.3f \n", i, distances.get(i).getKey(), distances.get(i).getValue());
         }
     }
 }
